@@ -1,0 +1,150 @@
+```{python}
+import numpy as np
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import plotly.io as pio
+pio.templates.default = "seaborn"
+import h5py
+
+def read_frame(filename, var):
+    mesh = h5py.File(filename, 'r')['mesh']
+    points = mesh['points']
+    connectivity = mesh['connectivity']
+
+    segments = np.zeros((connectivity.shape[0], 2, 2))
+    segments[:, :, 0] = points[:][connectivity[:]][:, :, 0]
+
+    centers = .5*(segments[:, 0, 0] + segments[:, 1, 0])
+    
+    u = mesh['fields'][var][:]
+    level = mesh['fields']['level'][:]
+    
+    index = np.argsort(centers)
+
+    x = centers[index]    
+    u = u[index]
+    level = level[index]
+    
+    return x, u, level
+
+def recons(xmin, xmax, min_level, max_level, x, u, level):
+
+    # read leaf cells
+    ul = {}
+    for ilevel in range(min_level, max_level+1):
+        dx = (xmax-xmin)/(2**ilevel)
+        ul[ilevel] = np.empty(2**ilevel)
+        ul[ilevel][:] = np.nan
+        idx, = np.where(level == ilevel) 
+        ##print(ilevel, idx, dx, (x[idx]-xmin-0.5*dx)/dx)
+        index = ((x[idx]-xmin-0.5*dx)/dx).astype(int)
+        ##print(index)
+        ul[ilevel][index] = u[idx]
+
+    # projection of leaves 
+    for ilevel in range(max_level-1, min_level-1, -1):
+        #print('ilevel =', ilevel)
+        for idx in range(2**(ilevel)):
+            #print(ul[ilevel+1][2*idx])
+            if not np.isnan(ul[ilevel+1][2*idx]):
+                #print(idx, ul[ilevel][idx], ul[ilevel+1][2*idx], ul[ilevel+1][2*idx+1])
+                ul[ilevel][idx] = 0.5 * (ul[ilevel+1][2*idx] + ul[ilevel+1][2*idx+1])
+
+    # prediction
+    for ilevel in range(min_level, max_level):
+        #print('ilevel =', ilevel)
+        for idx in range(2**ilevel):
+            if np.isnan(ul[ilevel+1][2*idx]):
+                #print(idx)
+                ul[ilevel+1][2*idx]   = ul[ilevel][idx] - (1./8) * (ul[ilevel][(idx+1)%(2**ilevel)] - ul[ilevel][idx-1])
+                ul[ilevel+1][2*idx+1] = ul[ilevel][idx] + (1./8) * (ul[ilevel][(idx+1)%(2**ilevel)] - ul[ilevel][idx-1])
+                #ul[ilevel+1][2*idx]   = ul[ilevel][idx] - (22./128.) * (ul[ilevel][(idx+1)%(2**ilevel)] - ul[ilevel][idx-1]) + (3./128.) * (ul[ilevel][(idx+2)%(2**ilevel)] - ul[ilevel][idx-2])
+                #ul[ilevel+1][2*idx+1] = ul[ilevel][idx] + (22./128.) * (ul[ilevel][(idx+1)%(2**ilevel)] - ul[ilevel][idx-1]) - (3./128.) * (ul[ilevel][(idx+2)%(2**ilevel)] - ul[ilevel][idx-2])
+
+    return ul[max_level][:]
+
+def show_animation(nb_frames, min_level, max_level, order, directory):
+
+    xmin = -1.
+    xmax = 1.
+    dx = (xmax-xmin)/(2**max_level)
+
+    xqexa = np.linspace(xmin+0.5*dx, xmax-0.5*dx, 2**max_level)
+    #print(xqexa)
+
+    cfl = 0.5    
+    dt = cfl*dx
+    t = np.loadtxt(f'data/order{order:02d}/'+directory+'/time.txt')
+
+    min_err = np.inf
+    max_err = -np.inf
+    min_lev = np.inf
+    max_lev = -np.inf
+
+    frames = []
+    steps  = []
+
+    for i in range(nb_frames):
+        name = f"{t[i]:.3f}"
+
+        # read quasi-exact sol 
+        level_qexa = 13
+        filename = f'data/order{order:02d}/burgers_uniform/burgers_level_{level_qexa}_{level_qexa}_ite_{i}.h5'
+        _, uqexa, _ = read_frame(filename, 'u')
+
+        # project quasi-exact level 
+        for ilevel in range(level_qexa-1, max_level-1, -1):
+            nx = 2**ilevel
+            uqexa_proj = np.empty(nx)
+            for inx in range(nx):
+                uqexa_proj[inx] = -(1/16)*uqexa[2*inx-1] + (9/16)*uqexa[2*inx] + (9/16)*uqexa[2*inx+1] - (1/16)*uqexa[(2*inx+2)%(2*nx)]
+            uqexa = np.copy(uqexa_proj)
+            # xqexa = np.linspace(xmin+0.5*dx, xmax-0.5*dx, 2**12)
+        
+        
+        # read MR sol
+        filename = f'data/order{order:02d}/'+directory+f'/burgers_level_{min_level}_{max_level}_ite_{i}.h5'
+        xmr, umr, levelmr = read_frame(filename, 'u')
+        mylevelmr = np.empty(3*levelmr.size)
+        mylevelmr[0::3] = levelmr 
+        mylevelmr[1::3] = levelmr 
+        mylevelmr[2::3] = np.nan
+        myxmr = np.empty(3*xmr.size)
+        myxmr[0::3] = xmr - 0.5*(2./(2**levelmr))
+        myxmr[1::3] = xmr + 0.5*(2./(2**levelmr))
+        myxmr[2::3] = np.nan
+
+        # reconstruct MR sol on finest grid
+        u_recons = recons(xmin, xmax, min_level, max_level, xmr, umr, levelmr)
+
+        marker_level = dict(symbol='line-ns', line_color='rgb(85,168,104)', line_width=1, size=4) 
+    
+        frames.append(go.Frame(data=[go.Scatter(x=xqexa, y=uqexa, name="quasi exa. sol."), 
+                                     go.Scatter(x=xqexa, y=u_recons, name="sol."),
+                                     go.Scatter(x=myxmr, y=mylevelmr, mode="lines+markers", marker=marker_level, name="level")], name=name))
+        
+        step = dict(method="animate", label = name, 
+                    args=[[name], {"frame": {"redraw": False, "duration": 100}, 
+                    "mode": "immediate", "transition": {"duration": 300}}])
+        steps.append(step)
+
+    # display solutions
+    fig = make_subplots(rows=2, cols=1, subplot_titles=("Sol", "Level"), vertical_spacing=0.1)
+
+    fig.add_trace(go.Scatter(x=frames[7].data[0].x, y=frames[7].data[0].y, name="quasi exa. sol."), row=1, col=1)
+    fig.add_trace(go.Scatter(x=frames[7].data[1].x, y=frames[7].data[1].y, name="sol. "), row=1, col=1)
+    fig.add_trace(go.Scatter(x=frames[7].data[2].x, y=frames[7].data[2].y, mode='lines+markers', marker=marker_level, name="level "), row=2, col=1)
+ 
+    sliders = [dict(currentvalue={'prefix': 't = '}, active=7, visible=True, steps=steps)]
+
+    title=f'Burgers 1D, eps = {1e-3:.0e},  min level = {min_level}, max level = {max_level}'
+    legend = dict(x=0.80, y=0.99, bgcolor='rgba(0,0,0,0)', font=dict(size=14))
+    fig.update_layout(legend=legend, height=600, width=1000, sliders=sliders, title=title, 
+                      margin=dict(l=20, r=20, t=100, b=20))
+    fig.update(frames=frames)
+    fig.update_xaxes(range = [xmr[0], xmr[-1]], row=2)
+    fig.update_yaxes(range = [min_lev-1,max_lev+1], row=2)
+    fig.show()
+
+show_animation(8, 3, 12, 1, 'burgers_mr_mlf_eps_1e-3')
+```
