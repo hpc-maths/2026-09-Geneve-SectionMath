@@ -1,6 +1,6 @@
 ---
 title: Towards a new vision of mesh adaptation methods
-subtitle: and its impact on the simulation of PDEs
+subtitle: and its impact on the simulation of stiff PDEs
 author:
   name: Marc Massot
   affiliation: HPC@Maths team <br> CMAP / CNRS - Ecole polytechnique
@@ -14,7 +14,7 @@ format:
 resources:
   - videos/**
 highlight-style: github
-footer: Séminaire d'Analyse Numérique - Section de Mathématiques - Université de Genève <img width="5%" src="figures/by-sa.png"/> September 3rd 2026
+footer: Séminaire d'Analyse Numérique - Section de Mathématiques <img width="5%" src="figures/by-sa.png"/> University of Geneva - September 3rd 2026
 ---
 
 
