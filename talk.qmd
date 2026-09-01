@@ -699,7 +699,7 @@ Now, if we wanted to reconstruct all the cells of the finest level, we'd only ne
 - Analysis of mesh adaptation completed for convection - extension to reaction and diffusion in progress
   - Link with AMR important in terms of accuracy of the simulations
 - Conducting simulations with strict error control requires adpative multiresolution
-  - Data structure is a key issue - see presentation of **L. Gouarin**
+  - Data structure is a key issue - see work of **L. Gouarin**
   - New generation of coupled splitting / ImEx schemes in samurai
 - Link through the code and developper team to various applications
 ::::
