@@ -696,11 +696,11 @@ Now, if we wanted to reconstruct all the cells of the finest level, we'd only ne
 ## Conclusion {.fs-4}
 
 ::::{.align-self-center}
-- Analysis of mesh adaptation completed for convection - extension to reaction and diffusion in progress
+- Analysis of mesh adaptation completed for convection - extension to reaction and diffusion in progress (PhD F. Kicha)
   - Link with AMR important in terms of accuracy of the simulations
 - Conducting simulations with strict error control requires adpative multiresolution
   - Data structure is a key issue - see work of **L. Gouarin**
-  - New generation of coupled splitting / ImEx schemes in samurai
+  - New generation of coupled splitting / ImEx schemes in samurai (PIROCK - G. Vilmart)
 - Link through the code and developper team to various applications
 ::::
 
@@ -1003,6 +1003,8 @@ As part of NumPEx, we also have an engineer position to work on the I/O part of 
 Samurai
 :::
 [https://github.com/hpc-maths/samurai](https://github.com/hpc-maths/samurai)
+
+[https://hpc-maths.github.io/samurai-gallery/](https://hpc-maths.github.io/samurai-gallery/)
 ::::::
 ::::
 :::
