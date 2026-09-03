@@ -696,11 +696,11 @@ Now, if we wanted to reconstruct all the cells of the finest level, we'd only ne
 ## Conclusion {.fs-4}
 
 ::::{.align-self-center}
-- Analysis of mesh adaptation completed for convection - extension to reaction and diffusion in progress (PhD F. Kicha)
+- Analysis of mesh adaptation completed for convection - extension to reaction and diffusion in progress (PhD **F. Kicha**)
   - Link with AMR important in terms of accuracy of the simulations
 - Conducting simulations with strict error control requires adpative multiresolution
   - Data structure is a key issue - see work of **L. Gouarin**
-  - New generation of coupled splitting / ImEx schemes in samurai/ponio (PIROCK - G. Vilmart, J. Massot, L. Séries, C. Tenaud, L. Gouarin)
+  - New generation of coupled splitting / ImEx schemes in samurai/ponio (PIROCK - **G. Vilmart, J. Massot, L. Séries, C. Tenaud, L. Gouarin**)
 - Link through the code and developper team to various applications
 ::::
 
