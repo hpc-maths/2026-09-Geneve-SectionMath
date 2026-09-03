@@ -700,7 +700,7 @@ Now, if we wanted to reconstruct all the cells of the finest level, we'd only ne
   - Link with AMR important in terms of accuracy of the simulations
 - Conducting simulations with strict error control requires adpative multiresolution
   - Data structure is a key issue - see work of **L. Gouarin**
-  - New generation of coupled splitting / ImEx schemes in samurai (PIROCK - G. Vilmart)
+  - New generation of coupled splitting / ImEx schemes in samurai/ponio (PIROCK - G. Vilmart, J. Massot, L. Séries, C. Tenaud, L. Gouarin)
 - Link through the code and developper team to various applications
 ::::
 
